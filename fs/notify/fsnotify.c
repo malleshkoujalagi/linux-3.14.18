@@ -111,10 +111,10 @@ int __fsnotify_parent(struct path *path, struct dentry *dentry, __u32 mask)
 
 		if (path)
 			ret = fsnotify(p_inode, mask, path, FSNOTIFY_EVENT_PATH,
-				       dentry->d_name.name, 0);
+				       dentry->d_name.name, 0, 0);
 		else
 			ret = fsnotify(p_inode, mask, dentry->d_inode, FSNOTIFY_EVENT_INODE,
-				       dentry->d_name.name, 0);
+				       dentry->d_name.name, 0, 0);
 	}
 
 	dput(parent);
@@ -128,7 +128,8 @@ static int send_to_group(struct inode *to_tell,
 			 struct fsnotify_mark *vfsmount_mark,
 			 __u32 mask, void *data,
 			 int data_is, u32 cookie,
-			 const unsigned char *file_name)
+			 const unsigned char *file_name,
+             int bytes)
 {
 	struct fsnotify_group *group = NULL;
 	__u32 inode_test_mask = 0;
@@ -179,7 +180,7 @@ static int send_to_group(struct inode *to_tell,
 
 	return group->ops->handle_event(group, to_tell, inode_mark,
 					vfsmount_mark, mask, data, data_is,
-					file_name, cookie);
+					file_name, cookie, bytes);
 }
 
 /*
@@ -189,7 +190,7 @@ static int send_to_group(struct inode *to_tell,
  * notification event in whatever means they feel necessary.
  */
 int fsnotify(struct inode *to_tell, __u32 mask, void *data, int data_is,
-	     const unsigned char *file_name, u32 cookie)
+	     const unsigned char *file_name, u32 cookie, int bytes)
 {
 	struct hlist_node *inode_node = NULL, *vfsmount_node = NULL;
 	struct fsnotify_mark *inode_mark = NULL, *vfsmount_mark = NULL;
@@ -247,17 +248,17 @@ int fsnotify(struct inode *to_tell, __u32 mask, void *data, int data_is,
 		if (inode_group > vfsmount_group) {
 			/* handle inode */
 			ret = send_to_group(to_tell, inode_mark, NULL, mask,
-					    data, data_is, cookie, file_name);
+					    data, data_is, cookie, file_name, bytes);
 			/* we didn't use the vfsmount_mark */
 			vfsmount_group = NULL;
 		} else if (vfsmount_group > inode_group) {
 			ret = send_to_group(to_tell, NULL, vfsmount_mark, mask,
-					    data, data_is, cookie, file_name);
+					    data, data_is, cookie, file_name, bytes);
 			inode_group = NULL;
 		} else {
 			ret = send_to_group(to_tell, inode_mark, vfsmount_mark,
 					    mask, data, data_is, cookie,
-					    file_name);
+					    file_name, bytes);
 		}
 
 		if (ret && (mask & ALL_FSNOTIFY_PERM_EVENTS))

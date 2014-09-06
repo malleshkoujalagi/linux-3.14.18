@@ -147,7 +147,8 @@ static int fanotify_handle_event(struct fsnotify_group *group,
 				 struct fsnotify_mark *inode_mark,
 				 struct fsnotify_mark *fanotify_mark,
 				 u32 mask, void *data, int data_type,
-				 const unsigned char *file_name, u32 cookie)
+				 const unsigned char *file_name, u32 cookie,
+                 int bytes)
 {
 	int ret = 0;
 	struct fanotify_event_info *event;
@@ -177,6 +178,7 @@ static int fanotify_handle_event(struct fsnotify_group *group,
 
 	fsn_event = &event->fse;
 	fsnotify_init_event(fsn_event, inode, mask);
+    fsn_event->bytes = bytes; /* TODO does this belong in fsnotify_init_event? */
 	event->tgid = get_pid(task_tgid(current));
 	if (data_type == FSNOTIFY_EVENT_PATH) {
 		struct path *path = data;

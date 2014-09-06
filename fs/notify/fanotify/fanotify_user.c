@@ -130,6 +130,7 @@ static int fill_event_metadata(struct fsnotify_group *group,
 		if (metadata->fd < 0)
 			ret = metadata->fd;
 	}
+    metadata->bytes = fsn_event->bytes;
 
 	return ret;
 }

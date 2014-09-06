@@ -99,7 +99,8 @@ struct fsnotify_ops {
 			    struct fsnotify_mark *inode_mark,
 			    struct fsnotify_mark *vfsmount_mark,
 			    u32 mask, void *data, int data_type,
-			    const unsigned char *file_name, u32 cookie);
+			    const unsigned char *file_name, u32 cookie,
+                int bytes);
 	void (*free_group_priv)(struct fsnotify_group *group);
 	void (*freeing_mark)(struct fsnotify_mark *mark, struct fsnotify_group *group);
 	void (*free_event)(struct fsnotify_event *event);
@@ -115,6 +116,7 @@ struct fsnotify_event {
 	/* inode may ONLY be dereferenced during handle_event(). */
 	struct inode *inode;	/* either the inode the event happened to or its parent */
 	u32 mask;		/* the type of access, bitwise OR for FS_* event types */
+    int bytes;      /* the number of bytes read or written by access / modify ops */
 };
 
 /*
@@ -253,7 +255,7 @@ struct fsnotify_mark {
 
 /* main fsnotify call to send events */
 extern int fsnotify(struct inode *to_tell, __u32 mask, void *data, int data_is,
-		    const unsigned char *name, u32 cookie);
+		    const unsigned char *name, u32 cookie, int bytes);
 extern int __fsnotify_parent(struct path *path, struct dentry *dentry, __u32 mask);
 extern void __fsnotify_inode_delete(struct inode *inode);
 extern void __fsnotify_vfsmount_delete(struct vfsmount *mnt);
@@ -379,7 +381,7 @@ extern void fsnotify_init_event(struct fsnotify_event *event,
 #else
 
 static inline int fsnotify(struct inode *to_tell, __u32 mask, void *data, int data_is,
-			   const unsigned char *name, u32 cookie)
+			   const unsigned char *name, u32 cookie, int bytes)
 {
 	return 0;
 }
